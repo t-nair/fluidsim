@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Fluid Flow Simulation</title>
+    <style>
+		body {
+			font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			background-color: #f0f0f0;
+		}
+
+		.container {
+			text-align: center;
+		}
+
+		.simulation {
+			display: flex;
+		}
+
+		.control-panel {
+			margin-left: 20px;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+
+		.control-panel label {
+			margin-bottom: 10px;
+		}
+
+		canvas {
+			border: 1px solid #000;
+		}
+	</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Fluid Flow Simulation</h1>
+		<p>Change the values in the control panel to the right to see changes in the flow rate of particles in the pipe below!</p>
+        <div class="simulation">
+            <canvas id="pipeCanvas" width="600" height="300"></canvas>
+            <div class="control-panel">
+                <label>
+                    Density:
+                    <input type="range" id="density" min="1" max="10" value="0">
+                </label>
+                <label>
+                    Viscosity:
+                    <input type="range" id="viscosity" min="1" max="100" value="50">
+                </label>
+            </div>
+        </div>
+    </div>
+    <script>
+		const canvas = document.getElementById('pipeCanvas');
+		const ctx = canvas.getContext('2d');
+
+		const densityInput = document.getElementById('density');
+		const viscosityInput = document.getElementById('viscosity');
+
+		let density = densityInput.value;
+		let viscosity = viscosityInput.value;
+
+		const particles = [];
+		const particleCount = 100; // Number of particles to simulate
+
+		// Initialize particles
+		for (let i = 0; i < particleCount; i++) {
+			particles.push({
+				x: 50 + Math.random() * (canvas.width - 100),
+				y: canvas.height / 2 - 40 + Math.random() * 80,
+				speed: (100 / viscosity) * (0.5 + Math.random() * 0.5), // Speed influenced by viscosity
+				direction: 0 // Initial direction
+			});
+		}
+
+		function drawPipe() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			// Draw pipe
+			ctx.strokeStyle = 'black';
+			ctx.lineWidth = 5;
+			ctx.beginPath();
+			ctx.moveTo(50, canvas.height / 2 - 50);
+			ctx.lineTo(canvas.width - 50, canvas.height / 2 - 50);
+			ctx.moveTo(50, canvas.height / 2 + 50);
+			ctx.lineTo(canvas.width - 50, canvas.height / 2 + 50);
+			ctx.stroke();
+
+			// Draw arrows representing fluid flow
+			const numArrows = 5;
+			const arrowSpacing = (canvas.width - 100) / numArrows;
+			const arrowLength = 20 * (100 / (viscosity * density));
+
+			for (let i = 0; i < numArrows; i++) {
+				const x = 50 + i * arrowSpacing;
+				const y = canvas.height / 2;
+				drawArrow(x, y, arrowLength);
+			}
+		}
+
+		function drawArrow(x, y, length) {
+			ctx.strokeStyle = 'black';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(x, y);
+			ctx.lineTo(x + length, y);
+			ctx.lineTo(x + length - 5, y - 5);
+			ctx.moveTo(x + length, y);
+			ctx.lineTo(x + length - 5, y + 5);
+			ctx.stroke();
+		}
+
+		function updateParticles() {
+			for (let particle of particles) {
+				// Update particle position based on its speed and direction
+				particle.x += particle.speed;
+				
+				// Reset particle position if it moves out of the pipe
+				if (particle.x > canvas.width - 50) {
+					particle.x = 50;
+				}
+			}
+		}
+
+		function drawParticles() {
+			ctx.fillStyle = "blue";
+			for (let particle of particles) {
+				ctx.beginPath();
+				ctx.arc(particle.x, particle.y, 3, 0, 2 * Math.PI);
+				ctx.fill();
+			}
+		}
+
+		function updateSimulation() {
+			density = densityInput.value;
+			viscosity = viscosityInput.value;
+
+			// Update particle speeds based on viscosity
+			for (let particle of particles) {
+				particle.speed = (100 / (viscosity * density)) * (0.5 + Math.random() * 0.5);
+
+			}
+
+			drawPipe();
+		}
+
+		function animate() {
+			updateParticles();
+			drawPipe();
+			drawParticles();
+			requestAnimationFrame(animate);
+		}
+
+		densityInput.addEventListener('input', updateSimulation);
+		viscosityInput.addEventListener('input', updateSimulation);
+
+		drawPipe();
+		animate();
+	</script>
+</body>
+</html>
